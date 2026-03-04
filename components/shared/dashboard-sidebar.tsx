@@ -1,7 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,14 @@ import {
   Library,
   Brain,
   TrendingUp,
+  ChevronDown,
+  ChevronRight,
+  GraduationCap,
+  Award,
+  BookMarked,
+  Layers,
+  ListTree,
+  Sparkles,
 } from "lucide-react"
 
 interface NavItem {
@@ -28,10 +37,16 @@ interface NavItem {
   icon: React.ReactNode
 }
 
+interface NavGroup {
+  label: string
+  icon: React.ReactNode
+  children: NavItem[]
+}
+
 interface DashboardSidebarProps {
   user: { full_name: string; avatar_url: string | null }
   plan?: "free" | "paid"
-  navItems: NavItem[]
+  navItems: (NavItem | NavGroup)[]
   title: string
 }
 
@@ -51,6 +66,10 @@ export function DashboardSidebar({
   title,
 }: DashboardSidebarProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    Content: pathname?.startsWith("/admin/content") ?? true,
+  })
 
   async function handleLogout() {
     const supabase = createClient()
@@ -73,19 +92,69 @@ export function DashboardSidebar({
           </p>
         </div>
         <nav className="space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                "text-muted-foreground hover:bg-accent/50 hover:text-foreground dark:text-muted-foreground dark:hover:bg-accent/50 dark:hover:text-foreground"
-              )}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            if ("children" in item) {
+              const isExpanded = expandedGroups[item.label] ?? true
+              return (
+                <div key={item.label}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedGroups((prev) => ({ ...prev, [item.label]: !isExpanded }))
+                    }
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      "text-muted-foreground hover:bg-accent/50 hover:text-foreground dark:text-muted-foreground dark:hover:bg-accent/50 dark:hover:text-foreground"
+                    )}
+                  >
+                    <span className="flex items-center gap-3">
+                      {item.icon}
+                      {item.label}
+                    </span>
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+                  {isExpanded && (
+                    <div className="ml-4 mt-1 space-y-0.5 border-l border-border pl-3 dark:border-border">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={cn(
+                            "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+                            pathname === child.href
+                              ? "font-medium text-foreground dark:text-foreground"
+                              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground dark:text-muted-foreground dark:hover:bg-accent/50 dark:hover:text-foreground"
+                          )}
+                        >
+                          {child.icon}
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  pathname === item.href
+                    ? "bg-accent/30 text-foreground dark:bg-accent/30 dark:text-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground dark:text-muted-foreground dark:hover:bg-accent/50 dark:hover:text-foreground"
+                )}
+              >
+                {item.icon}
+                {item.label}
+              </Link>
+            )
+          })}
         </nav>
       </div>
       <Separator className="dark:bg-border" />
@@ -125,9 +194,21 @@ export function DashboardSidebar({
   )
 }
 
-export const adminNavItems: NavItem[] = [
+export const adminNavItems: (NavItem | NavGroup)[] = [
   { href: "/admin", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
-  { href: "/admin/content", label: "Content", icon: <FileText className="h-4 w-4" /> },
+  {
+    label: "Content",
+    icon: <FileText className="h-4 w-4" />,
+    children: [
+      { href: "/admin/content/qualifications", label: "Qualifications", icon: <GraduationCap className="h-4 w-4" /> },
+      { href: "/admin/content/exam-boards", label: "Exam Boards", icon: <Award className="h-4 w-4" /> },
+      { href: "/admin/content/subjects", label: "Subjects", icon: <BookMarked className="h-4 w-4" /> },
+      { href: "/admin/content/topics", label: "Topics", icon: <Layers className="h-4 w-4" /> },
+      { href: "/admin/content/subtopics", label: "Subtopics", icon: <ListTree className="h-4 w-4" /> },
+      { href: "/admin/content/courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
+      { href: "/admin/content/setup", label: "AI Course Setup", icon: <Sparkles className="h-4 w-4" /> },
+    ],
+  },
   { href: "/admin/users", label: "Users", icon: <Users className="h-4 w-4" /> },
   { href: "/admin/analytics", label: "Analytics", icon: <BarChart3 className="h-4 w-4" /> },
   { href: "/admin/settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
