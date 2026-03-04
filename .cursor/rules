@@ -1,0 +1,215 @@
+# ExAIm B2C — Cursor Rules
+
+## Project Overview
+ExAIm B2C is an AI-powered exam preparation web application for teachers and students.
+Always read `project.md` for full context before making any decisions.
+Always read the relevant spec file in `spec/` before building any feature.
+
+## Tech Stack
+- Next.js 16 with App Router
+- TypeScript (strict mode — no `any` types ever)
+- Tailwind CSS (utility classes only — no inline styles ever)
+- shadcn/ui (customised — never use default unstyled components)
+- Supabase (database, auth, storage)
+- Claude API (AI evaluation and tutor)
+- Stripe (payments)
+- Resend (emails)
+- KaTeX (math rendering)
+- TipTap (rich text editor)
+
+## Folder Structure
+```
+src/
+├── app/                  # Next.js App Router pages and layouts
+│   ├── (auth)/           # Auth pages (login, signup)
+│   ├── (admin)/          # Admin panel routes
+│   ├── (teacher)/        # Teacher dashboard routes
+│   ├── (student)/        # Student dashboard routes
+│   └── api/              # API routes
+├── components/
+│   ├── ui/               # shadcn/ui base components
+│   ├── shared/           # Shared components across roles
+│   ├── admin/            # Admin specific components
+│   ├── teacher/          # Teacher specific components
+│   └── student/          # Student specific components
+├── lib/
+│   ├── supabase/         # Supabase client and server instances
+│   ├── claude/           # Claude API calls and prompts
+│   ├── stripe/           # Stripe helpers
+│   ├── resend/           # Email templates and sending
+│   └── utils/            # General utility functions
+├── hooks/                # Custom React hooks
+├── types/                # TypeScript types and interfaces
+└── constants/            # App wide constants
+```
+
+## Coding Rules
+
+### TypeScript
+- Strict mode always on
+- No `any` types — ever
+- All props must be typed with interfaces
+- All API responses must be typed
+- Use Zod for all form validation and API input validation
+
+### Components
+- Functional components only — no class components
+- Every component gets its own file
+- Component file names are PascalCase e.g. `ExamCard.tsx`
+- Keep components small and focused — if it's over 200 lines, split it
+- Always handle loading states
+- Always handle error states
+- Always handle empty states
+- Never leave a component without all three states handled
+
+### Styling
+- Tailwind utility classes only
+- No inline styles ever
+- No arbitrary Tailwind values unless absolutely necessary
+- Always follow the design system in `spec/design-system.md`
+- Mobile styles are not required — desktop first, tablet considered
+- Dark mode support required on all components using Tailwind dark: prefix
+
+### API Routes
+- All API routes live in `src/app/api/`
+- Always validate input with Zod before processing
+- Always return consistent response shape:
+```typescript
+// Success
+{ success: true, data: ... }
+// Error
+{ success: false, error: "message" }
+```
+- Always handle errors with try/catch
+- Never expose internal error messages to the client
+- Always check authentication before processing
+- Always check authorisation (role) before processing
+
+### Supabase
+- Always use server side Supabase client in API routes and server components
+- Always use client side Supabase client in client components
+- Never expose Supabase service role key to the client
+- Always use Row Level Security — never bypass it
+- Always use typed Supabase client with generated types
+
+### Authentication & Authorisation
+- Every protected route checks auth via middleware
+- Every API route checks auth before processing
+- Role is always verified — admin, teacher, student
+- Never trust client side role claims — always verify from database
+
+### Claude API
+- All Claude API calls live in `src/lib/claude/`
+- Always use structured JSON output
+- Always include error handling for API failures
+- Always save student attempt before calling Claude
+- If Claude fails, save attempt and retry in background
+- Never block the UI waiting for Claude — show processing state
+- Always scope AI tutor responses to the student's enrolled course
+
+### Claude API Usage
+Claude is used in FOUR distinct ways in this app:
+
+1. **Exam Generation (Admin)**
+   - Admin describes an exam, Claude generates full exam with questions, 
+     sub-questions, mark schemes and marking points
+   - Admin always reviews and approves before publishing
+   - Never auto-publish AI generated content
+   - All generation calls live in `src/lib/claude/exam-generation.ts`
+
+2. **Question Generation (Admin)**
+   - Admin generates individual questions within the exam builder
+   - Same review and approval flow applies
+   - All generation calls live in `src/lib/claude/question-generation.ts`
+
+3. **Answer Evaluation (Student)**
+   - Claude evaluates student answers against mark scheme
+   - Returns structured JSON with marks, breakdown, feedback, improvement
+   - Vision enabled — images sent alongside question text
+   - Error carried forward logic applied for multi-part questions
+   - All evaluation calls live in `src/lib/claude/evaluation.ts`
+
+4. **AI Tutor Chatbot (Student)**
+   - Post-exam mode: explains mistakes and teaches concepts
+   - Standalone mode: student asks questions about their course
+   - Always scoped to student's enrolled course — never goes off topic
+   - All tutor calls live in `src/lib/claude/tutor.ts`
+
+### Claude API Rules
+- Always use claude-sonnet-4-5 model
+- Always use structured JSON output for evaluation and generation
+- Always include error handling for API failures
+- Always save student attempt before calling Claude evaluation
+- If Claude fails, save attempt and retry in background
+- Never block UI waiting for Claude — always show processing state
+- Rate limit all Claude endpoints per user per hour
+- Never auto-publish AI generated content — always require human review
+
+### Forms
+- Never use HTML `<form>` tags
+- Always use controlled components with React state
+- Always validate with Zod before submission
+- Always show inline validation errors
+- Always disable submit button while submitting
+
+### Database
+- Never write raw SQL in components or API routes
+- Always use Supabase client methods
+- All database operations in server side code only
+- Never expose database errors to client
+
+### Error Handling
+- Every async operation wrapped in try/catch
+- User facing errors are always friendly and actionable
+- Log detailed errors server side
+- Never show stack traces to users
+
+### Code Quality
+- No commented out code in commits
+- No console.log in production code — use proper logging
+- No hardcoded strings — use constants
+- No magic numbers — use named constants
+- DRY — if you write the same thing twice, extract it
+
+## Naming Conventions
+- Components: PascalCase — `ExamCard.tsx`
+- Files/folders: kebab-case — `exam-card.tsx` for non-components
+- Variables/functions: camelCase — `examData`
+- Constants: SCREAMING_SNAKE_CASE — `MAX_FREE_EXAMS`
+- Database tables: snake_case — `exam_attempts`
+- Types/interfaces: PascalCase — `ExamAttempt`
+
+## What NOT to Do
+- No vibe coding — always read the spec first
+- No `any` TypeScript types
+- No inline styles
+- No skipping loading/error/empty states
+- No hardcoded API keys — always use environment variables
+- No client side database calls
+- No unprotected API routes
+- No skipping input validation
+- No raw SQL in application code
+- No console.log in commits
+- No HTML form tags
+- No skipping dark mode support
+- No arbitrary design decisions — always follow `spec/design-system.md`
+
+## Environment Variables
+All secrets live in `.env.local` — never commit this file.
+Required variables:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `ANTHROPIC_API_KEY`
+- `STRIPE_SECRET_KEY`
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `RESEND_API_KEY`
+- `NEXT_PUBLIC_APP_URL`
+
+## Before Building Any Feature
+1. Read `project.md`
+2. Read the relevant spec file in `spec/`
+3. Read `spec/design-system.md`
+4. Check `build-order.md` for current phase
+5. Then build
