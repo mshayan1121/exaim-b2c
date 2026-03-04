@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aarkue/tiptap-math-extension": "^1.4.0",
     "@anthropic-ai/sdk": "^0.78.0",
     "@stripe/stripe-js": "^8.9.0",
     "@supabase/ssr": "^0.9.0",
@@ -27,6 +28,8 @@
     "cmdk": "^1.1.1",
     "katex": "^0.16.33",
     "lucide-react": "^0.577.0",
+    "mathlive": "^0.108.3",
+    "mathquill": "^0.10.1-a",
     "nanoid": "^5.1.6",
     "next": "16.1.6",
     "next-themes": "^0.4.6",

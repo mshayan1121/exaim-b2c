@@ -1,8 +1,8 @@
 "use client"
 
 import { useRef, useEffect, useCallback, useState } from "react"
-import { MathRenderer } from "@/components/shared/MathRenderer"
-import { MathKeyboard } from "./MathKeyboard"
+import { InlineLatex } from "@/components/shared/InlineLatex"
+import { SymbolPalette } from "@/components/shared/SymbolPalette"
 import { MAX_ANSWER_LENGTH } from "@/constants"
 import { cn } from "@/lib/utils"
 
@@ -80,7 +80,7 @@ export function AnswerInput({
           aria-label="Answer input"
         />
         <div className="flex flex-col items-start gap-1 pt-2">
-          <MathKeyboard
+          <SymbolPalette
             onInsert={handleInsert}
             isOpen={keyboardOpen}
             onToggle={() => setKeyboardOpen((o) => !o)}
@@ -99,11 +99,7 @@ export function AnswerInput({
             LaTeX preview
           </p>
           <div className="text-base leading-[1.6] [&_.katex]:text-inherit">
-            {value.trim() ? (
-              <MathRenderer latex={value} display={false} />
-            ) : (
-              <span className="text-muted-foreground">—</span>
-            )}
+            <InlineLatex latex={value.trim()} display={false} />
           </div>
         </div>
 
